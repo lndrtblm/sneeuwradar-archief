@@ -2,7 +2,7 @@ name: Radar-archief
 
 on:
   schedule:
-    - cron: "23 */3 * * *"   # elke 3 uur
+    - cron: "23 * * * *"     # elk uur
   workflow_dispatch:          # handmatig starten kan ook
 
 permissions:
@@ -33,6 +33,23 @@ jobs:
       - name: Nieuwe kaarten toevoegen
         run: python archief.py data
 
+      - name: Sneeuwbronnen ophalen (voor de sneeuwhoogtes in de app)
+        run: |
+          mkdir -p data/bron
+          while read naam url; do
+            if curl -fsSL --max-time 30 -A "Mozilla/5.0 (compatible; sneeuwradar-archief/1.0)" -H "Accept-Language: en,fr;q=0.8" "$url" -o "data/bron/$naam.tmp"; then
+              mv "data/bron/$naam.tmp" "data/bron/$naam.html"
+            else
+              echo "mislukt: $naam (oude versie blijft staan)"; rm -f "data/bron/$naam.tmp"
+            fi
+          done <<'EOF'
+          lumiplan https://bulletin.lumiplan.pro/bulletin.php?station=sybelles&region=alpes&pays=france&lang=fr
+          bergfex https://www.bergfex.com/le-corbier/schneebericht/
+          skiresort https://www.skiresort.info/ski-resort/les-sybelles-le-corbier-la-toussuire-les-bottieres-st-sorlin-st-jean-darves/snow-report/
+          snowforecast https://www.snow-forecast.com/resorts/Le-Corbier/6day/top
+          skipass https://www.skipass.com/neige/le-corbier.html
+          EOF
+
       - name: Archief opslaan (zonder oude geschiedenis, zodat de repository klein blijft)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -48,7 +65,7 @@ jobs:
       - name: Planning actief houden
         # GitHub zet geplande taken uit na 60 dagen zonder activiteit; eens per maand een kleine wijziging
         run: |
-          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H)" -lt 3 ]; then
+          if [ "$(date -u +%d)" = "01" ] && [ "$(date -u +%H)" = "00" ]; then
             date -u > laatst-actief.txt
             git config user.name "radar-archief"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
