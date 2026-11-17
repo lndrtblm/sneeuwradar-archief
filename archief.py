@@ -101,9 +101,11 @@ def snow_share(jpg_bytes):
     """Deel van het onderste deel van het webcambeeld dat wit/grijs-wit is (sneeuw), in procenten."""
     im = Image.open(BytesIO(jpg_bytes)).convert("RGB")
     w, h = im.size
-    im = im.crop((0, int(h * 0.45), w, h)).resize((240, 80))
+    im = im.crop((0, int(h * 0.62), w, h)).resize((240, 80))  # alleen de grond, geen lucht of mist
     px = list(im.getdata())
-    snow = sum(1 for r, g, b in px if min(r, g, b) > 150 and max(r, g, b) - min(r, g, b) < 35)
+    # licht, weinig kleur en niet geler dan blauw (sneeuw in de schaduw is blauwig)
+    snow = sum(1 for r, g, b in px
+               if max(r, g, b) > 140 and min(r, g, b) > 90 and max(r, g, b) - min(r, g, b) < 70 and b >= r - 10)
     return round(100 * snow / len(px))
 
 
