@@ -37,14 +37,13 @@ jobs:
         run: |
           mkdir -p data/bron
           while read naam url; do
-            if curl -fsSL --max-time 30 -A "Mozilla/5.0 (compatible; sneeuwradar-archief/1.0)" -H "Accept-Language: en,fr;q=0.8" "$url" -o "data/bron/$naam.tmp"; then
+            if curl -fsSL --max-time 30 -A "Mozilla/5.0 (compatible; sneeuwradar-archief/1.0)" "$url" -o "data/bron/$naam.tmp"; then
               mv "data/bron/$naam.tmp" "data/bron/$naam.html"
             else
               echo "mislukt: $naam (oude versie blijft staan)"; rm -f "data/bron/$naam.tmp"
             fi
           done <<'EOF'
           lumiplan https://bulletin.lumiplan.pro/bulletin.php?station=sybelles&region=alpes&pays=france&lang=fr
-          bergfex https://www.bergfex.com/le-corbier/schneebericht/
           skiresort https://www.skiresort.info/ski-resort/les-sybelles-le-corbier-la-toussuire-les-bottieres-st-sorlin-st-jean-darves/snow-report/
           snowforecast https://www.snow-forecast.com/resorts/Le-Corbier/6day/top
           skipass https://www.skipass.com/neige/le-corbier.html
