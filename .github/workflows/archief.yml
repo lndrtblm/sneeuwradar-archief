@@ -37,7 +37,7 @@ jobs:
         run: |
           mkdir -p data/bron
           while read naam url; do
-            if curl -fsSL --max-time 30 -A "Mozilla/5.0 (compatible; sneeuwradar-archief/1.0)" "$url" -o "data/bron/$naam.tmp"; then
+            if curl -fsSL --max-time 30 --retry 4 --retry-all-errors --retry-delay 10 -A "Mozilla/5.0 (compatible; sneeuwradar-archief/1.0)" "$url" -o "data/bron/$naam.tmp"; then
               mv "data/bron/$naam.tmp" "data/bron/$naam.html"
             else
               echo "mislukt: $naam (oude versie blijft staan)"; rm -f "data/bron/$naam.tmp"
