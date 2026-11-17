@@ -91,6 +91,50 @@ def stamp(d):
     return d.strftime("%Y-%m-%d_%H")
 
 
+CAMS = {
+    "ouillon": ("https://skaping.s3.gra.io.cloud.ovh.net/les-sybelles/ouillon", (0,)),
+    "corbier": ("https://skaping.s3.gra.io.cloud.ovh.net/le-corbier/front-de-neige/panoramique", (0, 1)),
+}
+
+
+def snow_share(jpg_bytes):
+    """Deel van het onderste deel van het webcambeeld dat wit/grijs-wit is (sneeuw), in procenten."""
+    im = Image.open(BytesIO(jpg_bytes)).convert("RGB")
+    w, h = im.size
+    im = im.crop((0, int(h * 0.45), w, h)).resize((240, 80))
+    px = list(im.getdata())
+    snow = sum(1 for r, g, b in px if min(r, g, b) > 150 and max(r, g, b) - min(r, g, b) < 35)
+    return round(100 * snow / len(px))
+
+
+def webcams(folder):
+    """Zoekt per webcam het nieuwste beeld overdag (10-16 uur Franse tijd) en meet hoeveel sneeuw er te zien is."""
+    from zoneinfo import ZoneInfo
+    paris = datetime.now(ZoneInfo("Europe/Paris"))
+    out = {}
+    for cam, (base, offsets) in CAMS.items():
+        t = paris.replace(second=0, microsecond=0)
+        t = t - timedelta(minutes=t.minute % 10)
+        for _ in range(26 * 6):
+            if 10 <= t.hour < 16:
+                hit = None
+                for off in offsets:
+                    url = f"{base}/{t:%Y/%m/%d}/small/{t:%H}-{t.minute + off:02d}.jpg"
+                    try:
+                        hit = (url, get(url))
+                        break
+                    except Exception:
+                        pass
+                if hit:
+                    out[cam] = {"pct": snow_share(hit[1]), "time": t.strftime("%Y-%m-%d %H:%M"), "url": hit[0]}
+                    break
+            t -= timedelta(minutes=10)
+    os.makedirs(os.path.join(folder, "bron"), exist_ok=True)
+    with open(os.path.join(folder, "bron", "webcam.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f)
+    print(f"Webcams: {out}")
+
+
 def main(folder):
     os.makedirs(os.path.join(folder, "radar"), exist_ok=True)
     index_path = os.path.join(folder, "index.json")
@@ -146,4 +190,9 @@ def main(folder):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "data")
+    target = sys.argv[1] if len(sys.argv) > 1 else "data"
+    try:
+        webcams(target)
+    except Exception as e:  # webcams zijn een extraatje; de radar gaat voor
+        print(f"Webcams overgeslagen: {e}")
+    main(target)
