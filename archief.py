@@ -24,7 +24,7 @@ UA = {"User-Agent": "sneeuwradar-archief/1.0"}
 # Positie van Les Sybelles op de Alpenkaart (zelfde Mercator-formule als de app)
 BOUNDS = ((43.5317, 4.98676), (48.4116, 16.5236))
 RATIO = 586 / 960
-LAT, LON = 45.245, 6.27
+LAT, LON = 45.209, 6.1829  # zelfde punt als wintersport.nl
 
 SNOW = [(0, 255, 255), (0, 200, 255), (0, 150, 255), (83, 129, 232), (157, 111, 212),
         (215, 89, 243), (240, 134, 98), (255, 165, 0), (255, 85, 0), (255, 0, 0)]
