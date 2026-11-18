@@ -152,7 +152,7 @@ def wintersport(folder):
         if not c:
             continue
         out.append({"name": a["name"], "slug": a["slug"], "lon": round(c[0], 4), "lat": round(c[1], 4),
-                    "berg": s.get("maxSnowMountain"), "dal": s.get("maxSnowValley"), "upd": (s.get("updatedAt") or "")[:10],
+                    "berg": s.get("maxSnowMountain"), "dal": s.get("maxSnowValley"), "upd": s.get("updatedAt") or "",
                     "lifts": [s.get("elevatorsOpen"), s.get("elevatorsTotal")]})
     os.makedirs(os.path.join(folder, "bron"), exist_ok=True)
     with open(os.path.join(folder, "bron", "wintersport.json"), "w", encoding="utf-8") as f:
