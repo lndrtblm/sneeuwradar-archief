@@ -137,6 +137,29 @@ def webcams(folder):
     print(f"Webcams: {out}")
 
 
+def wintersport(folder):
+    """Sneeuwhoogtes (berg/dal) van alle skigebieden op wintersport.nl, met hun coördinaten."""
+    q = ("query { areas { name slug geography { location { coordinates } } "
+         "snowheights { updatedAt maxSnowMountain maxSnowValley elevatorsOpen elevatorsTotal } } }")
+    req = urllib.request.Request("https://www.wintersport.nl/graphql", data=json.dumps({"query": q}).encode(),
+                                 headers={**UA, "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        areas = json.loads(r.read())["data"]["areas"]
+    out = []
+    for a in areas:
+        c = ((a.get("geography") or {}).get("location") or {}).get("coordinates")
+        s = a.get("snowheights") or {}
+        if not c:
+            continue
+        out.append({"name": a["name"], "slug": a["slug"], "lon": round(c[0], 4), "lat": round(c[1], 4),
+                    "berg": s.get("maxSnowMountain"), "dal": s.get("maxSnowValley"), "upd": (s.get("updatedAt") or "")[:10],
+                    "lifts": [s.get("elevatorsOpen"), s.get("elevatorsTotal")]})
+    os.makedirs(os.path.join(folder, "bron"), exist_ok=True)
+    with open(os.path.join(folder, "bron", "wintersport.json"), "w", encoding="utf-8") as f:
+        json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
+    print(f"wintersport.nl: {len(out)} skigebieden")
+
+
 def main(folder):
     os.makedirs(os.path.join(folder, "radar"), exist_ok=True)
     index_path = os.path.join(folder, "index.json")
@@ -197,4 +220,8 @@ if __name__ == "__main__":
         webcams(target)
     except Exception as e:  # webcams zijn een extraatje; de radar gaat voor
         print(f"Webcams overgeslagen: {e}")
+    try:
+        wintersport(target)
+    except Exception as e:
+        print(f"wintersport.nl overgeslagen: {e}")
     main(target)
